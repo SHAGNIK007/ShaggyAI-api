@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Shagnik's Chatbot</title>
+    <link rel="stylesheet" href="/static/style.css">
+
+    <!-- Markdown Parser -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- Highlight.js for syntax highlighting -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/default.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">
+        Ask me anything!
+    </div>
+
+    <div id="chatBox" class="chat-box"></div>
+
+    <div class="chat-input">
+        <input 
+            type="text" 
+            id="messageInput" 
+            placeholder="Type something..."
+            onkeydown="handleKey(event)"
+        >
+        <button onclick="sendMessage()">SEND</button>
+    </div>
+</div>
+
+<script>
+
+async function sendMessage() {
+    const input = document.getElementById("messageInput");
+    const message = input.value.trim();
+    if (!message) return;
+
+    const chatBox = document.getElementById("chatBox");
+
+    chatBox.innerHTML += `<div class="message user">You: ${message}</div>`;
+    input.value = "";
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    const typing = document.createElement("div");
+    typing.className = "message bot typing";
+    typing.id = "typingIndicator";
+    typing.innerHTML = `
+        <div class="dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    `;
+    chatBox.appendChild(typing);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try {
+        const response = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
+        });
+
+        const data = await response.json();
+        document.getElementById("typingIndicator").remove();
+
+        const botMessage = document.createElement("div");
+        botMessage.className = "message bot";
+        botMessage.innerHTML = marked.parse(data.reply);
+
+        chatBox.appendChild(botMessage);
+
+        // Apply syntax highlighting
+        botMessage.querySelectorAll("pre code").forEach((block) => {
+            hljs.highlightElement(block);
+
+            // Add copy button
+            const wrapper = document.createElement("div");
+            wrapper.style.position = "relative";
+            block.parentNode.parentNode.insertBefore(wrapper, block.parentNode);
+            wrapper.appendChild(block.parentNode);
+
+            const btn = document.createElement("button");
+            btn.innerText = "COPY";
+            btn.className = "copy-btn";
+
+            btn.onclick = () => {
+                navigator.clipboard.writeText(block.innerText);
+                btn.innerText = "COPIED";
+                setTimeout(() => btn.innerText = "COPY", 1500);
+            };
+
+            wrapper.appendChild(btn);
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch (error) {
+        document.getElementById("typingIndicator").remove();
+        chatBox.innerHTML += `<div class="message bot">Server Error</div>`;
+    }
+}
+
+function handleKey(event) {
+    if (event.key === "Enter") {
+        sendMessage();
+    }
+}
+
+</script>
+
+</body>
+</html>
