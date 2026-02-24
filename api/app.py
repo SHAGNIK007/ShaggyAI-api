@@ -8,12 +8,10 @@ app = Flask(
     static_folder="../static"
 )
 
-# 🔐 Get API key from Vercel environment variables
 API_KEY = os.getenv("GEMINI_KEY")
 
-# ✅ Use stable model
 MODEL_NAME = "models/gemini-1.5-flash"
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1/{MODEL_NAME}:generateContent"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/{MODEL_NAME}:generateContent"
 
 
 @app.route("/")
@@ -24,7 +22,6 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        # 🚨 Check if API key exists
         if not API_KEY:
             return jsonify({"reply": "ERROR: GEMINI_KEY not set in Vercel"}), 500
 
@@ -50,7 +47,6 @@ def chat():
 
         data = response.json()
 
-        # 🔎 Debug if Gemini fails
         if "candidates" not in data:
             return jsonify({"reply": f"Gemini API Error: {data}"}), 500
 
