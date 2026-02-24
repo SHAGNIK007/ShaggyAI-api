@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-import requests
+import google.generativeai as genai
 import os
 
 app = Flask(
@@ -10,14 +10,12 @@ app = Flask(
 
 API_KEY = os.getenv("GEMINI_KEY")
 
-MODEL_NAME = "gemini-1.5-flash-latest"
-
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
+if API_KEY:
+    genai.configure(api_key=API_KEY)
 
 @app.route("/")
 def home():
     return render_template("index.html")
-
 
 @app.route("/chat", methods=["POST"])
 def chat():
@@ -30,32 +28,11 @@ def chat():
         if not user_message:
             return jsonify({"reply": "Please enter a message."})
 
-        payload = {
-            "contents": [
-                {
-                    "parts": [{"text": user_message}]
-                }
-            ]
-        }
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
-        response = requests.post(
-            GEMINI_URL,
-            params={"key": API_KEY},
-            json=payload,
-            timeout=30
-        )
+        response = model.generate_content(user_message)
 
-        data = response.json()
-
-        if "candidates" not in data:
-            return jsonify({"reply": f"Gemini API Error: {data}"}), 500
-
-        reply = data["candidates"][0]["content"]["parts"][0]["text"]
-
-        return jsonify({"reply": reply})
+        return jsonify({"reply": response.text})
 
     except Exception as e:
         return jsonify({"reply": f"Server Error: {str(e)}"}), 500
-
-
-# ❌ DO NOT use app.run() on Vercel
