@@ -2,13 +2,14 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import os
 
-app = Flask(
-    __name__,
-    template_folder="../templates",
-    static_folder="../static"
-)
+app = Flask(__name__,
+            template_folder="templates",
+            static_folder="static")
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+API_KEY = os.getenv("GROQ_API_KEY")
+
+MODEL_NAME = "llama-3.1-8b-instant"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 @app.route("/")
 def home():
@@ -17,30 +18,26 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     try:
-        if not GROQ_API_KEY:
-            return jsonify({"reply": "ERROR: GROQ_API_KEY not set in Vercel"}), 500
+        user_message = request.json["message"]
 
-        user_message = request.json.get("message", "").strip()
+        payload = {
+            "model": MODEL_NAME,
+            "messages": [
+                {"role": "user", "content": user_message}
+            ]
+        }
 
-        if not user_message:
-            return jsonify({"reply": "Please enter a message."})
-
-        response = requests.post(
-            "https://api.groq.com/openai/v1/chat/completions",
+        r = requests.post(
+            GROQ_URL,
             headers={
-                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Authorization": f"Bearer {API_KEY}",
                 "Content-Type": "application/json"
             },
-            json={
-                "model": "llama-3.1-8b-instant",
-                "messages": [
-                    {"role": "user", "content": user_message}
-                ]
-            },
+            json=payload,
             timeout=30
         )
 
-        data = response.json()
+        data = r.json()
 
         if "choices" not in data:
             return jsonify({"reply": f"Groq Error: {data}"}), 500
@@ -51,3 +48,7 @@ def chat():
 
     except Exception as e:
         return jsonify({"reply": f"Server Error: {str(e)}"}), 500
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
