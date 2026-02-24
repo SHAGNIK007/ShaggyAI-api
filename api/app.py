@@ -2,7 +2,8 @@ from flask import Flask, render_template, request, jsonify
 import requests
 import os
 
-app = Flask(__name__,
+app = Flask(
+    __name__,
     template_folder="../templates",
     static_folder="../static"
 )
@@ -36,15 +37,15 @@ def chat():
                     {"role": "user", "content": user_message}
                 ]
             },
-            timeout=600
+            timeout=30
         )
 
         data = response.json()
 
         if "choices" not in data:
             return jsonify({"reply": f"Groq Error: {data}"}), 500
-                    
-            reply = data["choices"][0]["message"]["content"]
+
+        reply = data["choices"][0]["message"]["content"]
 
         return jsonify({"reply": reply})
 
