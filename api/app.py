@@ -10,8 +10,9 @@ app = Flask(
 
 API_KEY = os.getenv("GEMINI_KEY")
 
-MODEL_NAME = "models/gemini-1.5-flash"
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/{MODEL_NAME}:generateContent"
+MODEL_NAME = "gemini-1.5-flash"
+
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent"
 
 
 @app.route("/")
