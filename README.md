@@ -35,6 +35,4 @@ This project is great for learning how to connect a local AI model to a web inte
 - **Flask / FastAPI** (depending on code)  
 - **HTML, CSS, JavaScript** — frontend  
 - **Ollama** — local AI model  
-- **Vercel** — deployment platform :contentReference[oaicite:2]{index=2}
-
 ---
